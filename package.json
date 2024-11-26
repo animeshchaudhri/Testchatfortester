@@ -1,0 +1,27 @@
+{
+  "name": "quick",
+  "version": "1.0.0",
+  "description": "real time chat application",
+  "scripts": {
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\""
+  },
+  
+  "keywords": [
+    "quick",
+    "chatapplication",
+    "real-time",
+    "chatapp",
+    "fast",
+    "speedy"
+  ],
+
+  
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "@types/node": "^20.12.12",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.0"
+  }
+}
