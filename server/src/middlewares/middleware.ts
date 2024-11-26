@@ -15,7 +15,7 @@ const limiterOptions = {
 
 const corsOptions = {
   //origin: process.env.APP_WEB_URL || 'http://localhost:3000',
-  origin: ['http://localhost:3000'],
+  origin: ['http://localhost:3000','https://testchatfortester.vercel.app'],
   credentials: true,
   optionsSuccessStatus: 200,
 };
