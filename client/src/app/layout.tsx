@@ -10,9 +10,9 @@ import ToasterContext from "@/context/ToasterContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Quick",
+  title: "Boom chat - Chat lightning speed",
   description:
-    "Ditch the delays, connect in a heartbeat. It's chat lightning speed.",
+    "Boom chat is a lightning-fast chat application that allows you to chat with your friends and family in real-time.",
 };
 
 export default function RootLayout({
