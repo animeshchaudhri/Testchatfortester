@@ -151,7 +151,7 @@ const Body: React.FC<BodyProps> = ({ initialMessages, chatType }) => {
             <FiLock />
             Messages and calls are end-to-end encrypted.
           </p>
-          <p>No one outside of this chat,not even Quick,</p>
+          <p>No one outside of this chat,not even boom,</p>
           <p>can read or listen to them.</p>
         </div>
       </div>

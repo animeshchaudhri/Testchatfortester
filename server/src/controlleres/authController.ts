@@ -51,7 +51,7 @@ const signupController = async (req: Request, res: Response, next: NextFunction)
     });
 
     // send mail
-    // await sendMail(email, 'Welcome to Quick - Chat with the Speed of Life!', emailContent);
+    // await sendMail(email, 'Welcome to boom - Chat with the Speed of Life!', emailContent);
 
     const payload = {
       id: newUser.id,

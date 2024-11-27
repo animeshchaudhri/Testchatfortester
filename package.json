@@ -1,5 +1,5 @@
 {
-  "name": "quick",
+  "name": "boom",
   "version": "1.0.0",
   "description": "real time chat application",
   "scripts": {
@@ -8,14 +8,7 @@
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\""
   },
   
-  "keywords": [
-    "quick",
-    "chatapplication",
-    "real-time",
-    "chatapp",
-    "fast",
-    "speedy"
-  ],
+  
 
   
   "devDependencies": {
