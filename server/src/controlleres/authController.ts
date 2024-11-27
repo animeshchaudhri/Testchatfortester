@@ -364,7 +364,7 @@ const forgotPasswordController = async (req: Request, res: Response, next: NextF
     });
 
     // send mail
-    await sendMail(email, 'Forgot Password Link', emailContent);
+    // await sendMail(email, 'Forgot Password Link', emailContent);
 
     return res.status(200).json({
       success: true,
