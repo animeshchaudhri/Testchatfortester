@@ -42,7 +42,7 @@ const Header: React.FC<HeaderProps> = ({ conversation, chatType }) => {
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
       />
-      {/* <VideoCall data={conversation} /> */}
+  <VideoCall data={conversation} /> 
       <div className="bg-white w-full flex border-b-[1px] sm:px-4 py-4 px-4 lg:px-6 justify-between items-center shadow-sm">
         <div className="flex gap-3 items-center">
           <Link
