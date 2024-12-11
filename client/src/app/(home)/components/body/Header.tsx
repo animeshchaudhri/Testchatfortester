@@ -69,12 +69,12 @@ const Header: React.FC<HeaderProps> = ({ conversation, chatType }) => {
             onClick={() => setDrawerOpen(true)}
             className="text-gray-500 cursor-pointer hover:text-sky-600 transition"
           />
-          {chatType === "chats" && (
+          {/* {chatType === "chats" && (
             <IoVideocamOutline
               onClick={() => setIsVideoCall(true)}
               className="w-7 h-6 text-gray-500 cursor-pointer hover:text-sky-600 transition"
             />
-          )}
+          )} */}
         </div>
       </div>
     </>

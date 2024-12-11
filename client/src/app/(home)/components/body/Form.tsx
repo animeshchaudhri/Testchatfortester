@@ -66,7 +66,7 @@ const Form = () => {
         className="flex items-center gap-2 lg:gap-4 w-full"
       >
         <div ref={emojiPickerRef}>
-          <p
+          <div
             onClick={() => setOpen(true)}
             className="relative rounded-full p-2 cursor-pointer transition hover:bg-neutral-100"
           >
@@ -74,7 +74,7 @@ const Form = () => {
             <div className="absolute bottom-[60px]">
               <EmojiPicker open={open} onEmojiClick={handleEmoji} />
             </div>
-          </p>
+          </div>
         </div>
 
         <MessageInput

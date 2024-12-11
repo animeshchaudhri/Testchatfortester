@@ -51,7 +51,7 @@ const signupController = async (req: Request, res: Response, next: NextFunction)
     });
 
     // send mail
-    // await sendMail(email, 'Welcome to boom - Chat with the Speed of Life!', emailContent);
+     await sendMail(email, 'Welcome to boom - Chat with the Speed of Life!', emailContent);
 
     const payload = {
       id: newUser.id,
@@ -364,7 +364,7 @@ const forgotPasswordController = async (req: Request, res: Response, next: NextF
     });
 
     // send mail
-    // await sendMail(email, 'Forgot Password Link', emailContent);
+     await sendMail(email, 'Forgot Password Link', emailContent);
 
     return res.status(200).json({
       success: true,

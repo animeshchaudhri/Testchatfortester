@@ -5,6 +5,7 @@ import {
   updateprofileController,
   getProfileController,
 } from '../../controlleres/userController';
+import { updateProfileValidation } from '../../middlewares/validations';
 
 const router = express.Router();
 
@@ -18,6 +19,6 @@ router.get('/all', getAllUsersController);
 router.get('/profile', getProfileController);
 
 //api/users/update-profile
-router.put('/update-profile', updateprofileController);
+router.put('/update-profile', updateProfileValidation ,updateprofileController);
 
 export default router;

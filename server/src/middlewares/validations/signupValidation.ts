@@ -1,5 +1,3 @@
-
-// @ts-ignore
 import { Request, Response, NextFunction } from 'express';
 import * as yup from 'yup';
 import db from '../../config/prismadb';
@@ -11,27 +9,71 @@ declare module 'express' {
   }
 }
 
+// Constants for validation rules
+const VALIDATION_RULES = {
+  NAME_PATTERN: /^[A-Za-z ]+$/,
+  USERNAME_PATTERN: /^[a-zA-Z0-9_]*$/,
+  USERNAME_MIN_LENGTH: 3,
+  USERNAME_MAX_LENGTH: 20,
+  PASSWORD_MIN_LENGTH: 8,
+  PASSWORD_MAX_LENGTH: 16,
+} as const;
+
+// Error messages
+const ERROR_MESSAGES = {
+  NAME_REQUIRED: 'Name cannot be empty',
+  NAME_INVALID: 'Enter a valid name (letters and spaces only)',
+  USERNAME_REQUIRED: 'Username cannot be empty',
+  USERNAME_MIN: `Username must be at least ${VALIDATION_RULES.USERNAME_MIN_LENGTH} characters`,
+  USERNAME_MAX: `Username cannot exceed ${VALIDATION_RULES.USERNAME_MAX_LENGTH} characters`,
+  USERNAME_PATTERN: 'Username can only contain letters, numbers, and underscores',
+  USERNAME_TAKEN: 'Username already registered',
+  EMAIL_REQUIRED: 'Email cannot be empty',
+  EMAIL_INVALID: 'Enter a valid email',
+  EMAIL_TAKEN: 'Email already registered',
+  PASSWORD_REQUIRED: 'Password cannot be empty',
+  PASSWORD_MIN: `Password must be at least ${VALIDATION_RULES.PASSWORD_MIN_LENGTH} characters`,
+  PASSWORD_MAX: `Password cannot exceed ${VALIDATION_RULES.PASSWORD_MAX_LENGTH} characters`,
+} as const;
+
 const signupSchema = yup.object().shape({
   name: yup
     .string()
-    .transform((value) => (value !== null ? value.charAt(0).toUpperCase() + value.slice(1) : value))
+    .transform((value) => {
+      if (!value) return value;
+      return value
+        .trim()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+    })
     .trim()
-    .required('Name can not be empty')
-    .test('isPerfectString', 'Enter a valid name', (arg) => /^[A-Za-z ]+$/.test(arg)),
+    .required(ERROR_MESSAGES.NAME_REQUIRED)
+    .test('isPerfectString', ERROR_MESSAGES.NAME_INVALID, 
+      (value) => !value || VALIDATION_RULES.NAME_PATTERN.test(value)),
+
   username: yup
     .string()
     .trim()
-    .required('Username can not be empty')
-    .min(3, 'Username must be at least 3 characters')
-    .max(20, 'Username can not exceed 20 characters')
-    .matches(/^[a-zA-Z0-9_]*$/, 'Username can only contain letters, numbers, and underscores'),
-  email: yup.string().trim().required('Email can not be empty').email('Enter a valid email'),
+    .required(ERROR_MESSAGES.USERNAME_REQUIRED)
+    .min(VALIDATION_RULES.USERNAME_MIN_LENGTH, ERROR_MESSAGES.USERNAME_MIN)
+    .max(VALIDATION_RULES.USERNAME_MAX_LENGTH, ERROR_MESSAGES.USERNAME_MAX)
+    .matches(VALIDATION_RULES.USERNAME_PATTERN, ERROR_MESSAGES.USERNAME_PATTERN)
+    .lowercase(), // Convert to lowercase to ensure case-insensitive uniqueness
+
+  email: yup
+    .string()
+    .trim()
+    .required(ERROR_MESSAGES.EMAIL_REQUIRED)
+    .email(ERROR_MESSAGES.EMAIL_INVALID)
+    .lowercase(), // Convert to lowercase to ensure case-insensitive uniqueness
+
   password: yup
     .string()
     .trim()
-    .required('Password can not be empty')
-    .min(8, 'Too short password')
-    .max(16, 'Too long password'),
+    .required(ERROR_MESSAGES.PASSWORD_REQUIRED)
+    .min(VALIDATION_RULES.PASSWORD_MIN_LENGTH, ERROR_MESSAGES.PASSWORD_MIN)
+    .max(VALIDATION_RULES.PASSWORD_MAX_LENGTH, ERROR_MESSAGES.PASSWORD_MAX),
 });
 
 const signupValidation = async (req: Request, res: Response, next: NextFunction) => {
@@ -39,49 +81,72 @@ const signupValidation = async (req: Request, res: Response, next: NextFunction)
   const { name, username, email, password } = req.body;
 
   try {
-    // Check if email and username is already registered
+    // Sanitize inputs before validation
+    const sanitizedData = {
+      name: name?.trim(),
+      username: username?.trim().toLowerCase(),
+      email: email?.trim().toLowerCase(),
+      password: password?.trim(),
+    };
+
+    // Check if email and username are already registered
     const [existingUser, existingUsername] = await Promise.all([
-      db.user.findFirst({ where: { email } }),
-      db.user.findFirst({ where: { username } }),
+      db.user.findFirst({ 
+        where: { 
+          email: sanitizedData.email 
+        },
+        select: { email: true } // Only select needed field
+      }),
+      db.user.findFirst({ 
+        where: { 
+          username: sanitizedData.username 
+        },
+        select: { username: true } // Only select needed field
+      }),
     ]);
 
     if (existingUser) {
-      return res.status(400).json({
+      return res.status(409).json({
         success: false,
-        message: { email: ['Email already registered'] },
+        message: { email: [ERROR_MESSAGES.EMAIL_TAKEN] },
       });
     }
 
     if (existingUsername) {
-      return res.status(400).json({
+      return res.status(409).json({
         success: false,
-        message: { username: ['Username already registered'] },
+        message: { username: [ERROR_MESSAGES.USERNAME_TAKEN] },
       });
     }
 
     // Validate input fields
-    const validatedData = await signupSchema.validate(
-      { name, username, email, password },
-      { stripUnknown: true, abortEarly: false },
-    );
-    // Set validated data to the request object\
-    // @ts-ignore
-    req.validData = validatedData;
-    next();
+    const validatedData = await signupSchema.validate(sanitizedData, {
+      stripUnknown: true,
+      abortEarly: false,
+    });
+
+    req.validData = validatedData as userType;
+    return next();
+
   } catch (err) {
     if (err instanceof yup.ValidationError) {
       err.inner.forEach((error: yup.ValidationError) => {
-        const fieldName = error.path || '';
-        if (!validationErrors[fieldName]) {
-          validationErrors[fieldName] = [];
-        }
-        validationErrors[fieldName].push(error.message);
+        if (!error.path) return;
+        
+        validationErrors[error.path] = validationErrors[error.path] || [];
+        validationErrors[error.path].push(error.message);
+      });
+
+      return res.status(400).json({
+        success: false,
+        message: validationErrors,
       });
     }
 
-    return res.status(400).json({
+    // Handle unexpected errors
+    return res.status(500).json({
       success: false,
-      message: validationErrors,
+      message: { general: ['An unexpected error occurred during validation'] },
     });
   }
 };
