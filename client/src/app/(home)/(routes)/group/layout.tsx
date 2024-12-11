@@ -34,7 +34,7 @@ const GroupLayout = ({ children }: { children: React.ReactNode }) => {
 
           await Promise.all([
             db.groupchat.bulkAdd(newGroupChats),
-            db.users.bulkAdd(newUsers),
+            db.users.bulkPut(newUsers),
           ]);
 
           setGroupChats(newGroupChats);
