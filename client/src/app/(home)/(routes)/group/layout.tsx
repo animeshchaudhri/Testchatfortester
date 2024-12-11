@@ -15,31 +15,24 @@ const GroupLayout = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [cachedGroupChats, cachedUsers] = await Promise.all([
-          db.groupchat.toArray(),
-          db.users.toArray(),
+        // Fetch fresh data from the API
+        const [groupChatsRes, usersRes] = await Promise.all([
+          api.get("/chats/get-groupchats"),
+          api.get("/users/get-users"),
         ]);
 
-        if (cachedGroupChats.length > 0 && cachedUsers.length > 0) {
-          setGroupChats(cachedGroupChats);
-          setUsers(cachedUsers);
-        } else {
-          const [groupChatsRes, usersRes] = await Promise.all([
-            api.get("/chats/get-groupchats"),
-            api.get("/users/get-users"),
-          ]);
+        const newGroupChats = groupChatsRes.data.data;
+        const newUsers = usersRes.data.data;
 
-          const newGroupChats = groupChatsRes.data.data;
-          const newUsers = usersRes.data.data;
+        // Insert or update data in IndexedDB
+        await Promise.all([
+          db.groupchat.bulkPut(newGroupChats), // Insert or update group chats
+          db.users.bulkPut(newUsers),           // Insert or update users
+        ]);
 
-          await Promise.all([
-            db.groupchat.bulkAdd(newGroupChats),
-            db.users.bulkPut(newUsers),
-          ]);
-
-          setGroupChats(newGroupChats);
-          setUsers(newUsers);
-        }
+        // Set the fetched data in the state
+        setGroupChats(newGroupChats);
+        setUsers(newUsers);
       } catch (error) {
         console.error("Error fetching:", error);
       }

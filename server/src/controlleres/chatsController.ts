@@ -250,7 +250,7 @@ export const getcreateChatController = async (req: Request, res: Response, next:
     }
 
     if (isGroup && (!members || members.length < 2 || !name)) {
-      return next(ErrorResponse.unauthorized('Add two members and a group name to create a group chat'));
+      return next(ErrorResponse.badRequest('Add two members and a group name to create a group chat'));
     }
 
     if (isGroup) {

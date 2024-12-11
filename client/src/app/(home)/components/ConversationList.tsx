@@ -79,33 +79,40 @@ const ConversationList: React.FC<ConversationProps> = ({
     pusherClient.subscribe(pusherKey);
 
     const newHandler = async (conversation: FullConversationType) => {
-      // Store new conversation in IndexedDB
-      if (conversation.isGroup) {
-        await db.groupchat.add(conversation);
-      } else {
-        await db.chats.add(conversation);
-
-        const user = otherUser(conversation);
-        if (user) {
-          await db.users.add(user);
+      try {
+        // Check if the conversation already exists in the store
+        let table = conversation.isGroup ? db.groupchat : db.chats;
+        const existingConversation = await table.get(conversation.id);
+    
+        // If it exists, update it, otherwise add it as new
+        if (existingConversation) {
+          await table.put(conversation);  // Use put to update the existing conversation
+        } else {
+          await table.add(conversation);  // Add a new conversation if it doesn't exist
         }
+    
+        if (!conversation.isGroup) {
+          const user = otherUser(conversation);
+          if (user) {
+            await db.users.put(user);  // Use put for users as well
+          }
+        }
+    
+        // Update state with the new or updated conversation
+        setItems((current) => {
+          if (find(current, { id: conversation.id })) {
+            return current;
+          }
+    
+          return [conversation, ...(current || [])];
+        });
+      } catch (error) {
+        console.error("Failed to add or update conversation in IndexedDB:", error);
       }
-
-      // Update state with the new conversation
-      setItems((current) => {
-        if (find(current, { id: conversation.id })) {
-          return current;
-        }
-
-        return [conversation, ...(current || [])];
-      });
     };
+    
 
-    const updateHandler = async (updateData: {
-      id: string;
-      isGroup: boolean;
-      messages: FullMessageType[];
-    }) => {
+    const updateHandler = async (updateData: { id: string; isGroup: boolean; messages: FullMessageType[] }) => {
       try {
         setItems((current) =>
           current?.map((currentConversation) =>
@@ -114,24 +121,24 @@ const ConversationList: React.FC<ConversationProps> = ({
               : currentConversation
           )
         );
-
+    
         let table = updateData.isGroup ? db.groupchat : db.chats;
         const conversation = await table.get(updateData.id);
+        
         if (conversation) {
-          const uniqueMessageIds = new Set(
-            conversation.messages.map((msg) => msg.id)
-          );
-
-          // Add a null check or use optional chaining to safely access filter
+          // Ensure messages is an array before calling map
+          const currentMessages = conversation.messages || [];
+    
+          const uniqueMessageIds = new Set(currentMessages.map((msg) => msg.id));
+    
           const filteredMessages = updateData.messages?.filter(
             (msg) => !uniqueMessageIds.has(msg.id)
           );
-
-          // Check if filteredMessages is defined before merging
+    
           const mergedMessages = filteredMessages
-            ? [...conversation.messages, ...filteredMessages]
-            : conversation.messages;
-
+            ? [...currentMessages, ...filteredMessages]
+            : currentMessages;
+    
           conversation.messages = mergedMessages;
           await table.put(conversation);
         }
@@ -139,6 +146,7 @@ const ConversationList: React.FC<ConversationProps> = ({
         console.error("Failed to update conversation in IndexedDB:", error);
       }
     };
+    
 
     const removeHandler = async (conversation: FullConversationType) => {
       // Remove conversation from IndexedDB
